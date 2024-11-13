@@ -241,8 +241,8 @@ def updater(batch_size):
     return d2l.sgd([W, b], lr, batch_size)
 
 # 训练10个周期
-num_epochs = 10
-train_ch3(net, train_iter, test_iter, cross_entropy, num_epochs, updater)
+# num_epochs = 10
+# train_ch3(net, train_iter, test_iter, cross_entropy, num_epochs, updater)
 
 """预测"""
 def predict_ch3(net, test_iter, n=6):  #@save
@@ -252,6 +252,7 @@ def predict_ch3(net, test_iter, n=6):  #@save
         break
     # 真实标号
     trues = d2l.get_fashion_mnist_labels(y)
+    print(net)
     # 预测标号
     preds = d2l.get_fashion_mnist_labels(net(X).argmax(axis=1))
     titles = [true +'\n' + pred for true, pred in zip(trues, preds)]
@@ -260,6 +261,10 @@ def predict_ch3(net, test_iter, n=6):  #@save
     d2l.plt.show()
 # 测试预测结果
 # 发现不在 if __name__ == '__main__': 中执行的话，会报错
-# if __name__ == '__main__':
-#     # 奇了怪了，我的预测怎么差这么多
-#     predict_ch3(net, test_iter)
+if __name__ == '__main__':
+    num_epochs = 10
+    train_ch3(net, train_iter, test_iter, cross_entropy, num_epochs, updater)
+    # 奇了怪了，我的预测怎么差这么多
+    # 我明白了，上下两个net是同一个，也就是上面训练完，准备好[对图像进行分类预测]
+    # 再进行下面的预测，才能准，而不是像我之前两个单独运行
+    predict_ch3(net, test_iter)

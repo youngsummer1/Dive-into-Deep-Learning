@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from d2l import torch as d2l
-
+from chapter3.softmax import train_ch3,predict_ch3
 
 batch_size = 256
 # 加载训练、测试数据集
@@ -46,10 +46,13 @@ def net(X):
 loss = nn.CrossEntropyLoss(reduction='none')
 
 """训练"""
-num_epochs, lr = 10, 0.1
-updater = torch.optim.SGD(params, lr=lr)
-d2l.train_ch3(net, train_iter, test_iter, loss, num_epochs, updater)
+if __name__ == '__main__':
+    num_epochs, lr = 10, 0.1
+    updater = torch.optim.SGD(params, lr=lr)
+    train_ch3(net, train_iter, test_iter, loss, num_epochs, updater)
+    predict_ch3(net, test_iter)
 
+d2l.plt.show()
 
 """"""
 """"""
