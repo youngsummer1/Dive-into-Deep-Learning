@@ -9,6 +9,7 @@ from PIL import Image
 from tqdm import tqdm
 import torchvision
 import torchvision.models as models
+from sklearn.model_selection import train_test_split
 # 导入数据集
 labels_dataFrame = pd.read_csv('../data/Classify-Leaves/train.csv')
 # test_dataFrame = pd.read_csv('../data/Classify-Leaves/test.csv')
@@ -39,40 +40,41 @@ num_to_class = {v: k for k, v in class_to_num.items()}
 """数据集生成"""
 # Dataset (将用于Dataloader)
 class LeaveData(data.Dataset):
-    def __init__(self, csv_path, file_path, mode = 'train', valid_ratio = 0.2,):
-                 # resize_height = 256, resize_width = 256):
+    def __init__(self, csv_path, file_path, ):
+                 # mode = 'train', valid_ratio = 0.2,resize_height = 256, resize_width = 256):
         self.file_path = file_path  # 文件根路径
         # self.resize_height = resize_height  # 高
         # self.resize_width = resize_width  # 宽
-        self.mode = mode  # 模式
+        # self.mode = mode  # 模式
         # 仅在主进程中加载数据
         # if __name__ == '__main__':
         # 读取csv
         self.data_info = pd.read_csv(csv_path)
         # 长度
-        self.data_len = len(self.data_info.index)  # 数据集的大小
-        self.train_len = int(self.data_len * (1 - valid_ratio))  # 训练数据集的大小
+        # self.data_len = len(self.data_info.index)  # 数据集的大小
+        # self.train_len = int(self.data_len * (1 - valid_ratio))  # 训练数据集的大小
 
-        if mode == 'train':
-            self.train_image = np.asarray(self.data_info.iloc[:self.train_len, 0])
-            self.train_label = np.asarray(self.data_info.iloc[:self.train_len, 1])
-            self.image_arr = self.train_image
-            self.label_arr = self.train_label
-        elif mode == 'valid':
-            self.valid_image = np.asarray(self.data_info.iloc[self.train_len:, 0])
-            self.valid_label = np.asarray(self.data_info.iloc[self.train_len:, 1])
-            self.image_arr = self.valid_image
-            self.label_arr = self.valid_label
-        elif mode == 'test':
-            self.test_image = np.asarray(self.data_info.iloc[:, 0])
-            self.image_arr = self.test_image
-        self.real_len = len(self.image_arr)  # 数据集长度
-        print('Finished reading the {} set of Leaves Dataset ({} samples found)'.format(mode, self.real_len))
+        # if mode == 'train':
+        #     self.train_image = np.asarray(self.data_info.iloc[:self.train_len, 0])
+        #     self.train_label = np.asarray(self.data_info.iloc[:self.train_len, 1])
+        #     self.image_arr = self.train_image
+        #     self.label_arr = self.train_label
+        # elif mode == 'valid':
+        #     self.valid_image = np.asarray(self.data_info.iloc[self.train_len:, 0])
+        #     self.valid_label = np.asarray(self.data_info.iloc[self.train_len:, 1])
+        #     self.image_arr = self.valid_image
+        #     self.label_arr = self.valid_label
+        # elif mode == 'test':
+        #     self.test_image = np.asarray(self.data_info.iloc[:, 0])
+        #     self.image_arr = self.test_image
+        # self.real_len = len(self.image_arr)  # 数据集长度
+        # print('Finished reading the {} set of Leaves Dataset ({} samples found)'.format(mode, self.real_len))
 
     def __getitem__(self, index):
         """Dataset必要的函数"""
         # 文件名
-        single_image_name = self.image_arr[index]
+        # single_image_name = self.image_arr[index]
+        single_image_name = self.data_info.iloc[index, 0]
         # 读取图像文件
         img_as_img = Image.open(self.file_path + single_image_name)
         # print(img_as_img)
@@ -108,24 +110,47 @@ class LeaveData(data.Dataset):
 
         img_as_img = transform(img_as_img)
         # print(img_as_img)
-        if self.mode == 'test':
-            return img_as_img
-        else:
-            label = self.label_arr[index]
-            # num label
-            number_label = class_to_num[label]
-            # 返回每一个index对应的图片数据和对应的label
+        # if self.mode == 'test':
+        #     return img_as_img
+        # else:
+        #     label = self.label_arr[index]
+        #     # num label
+        #     number_label = class_to_num[label]
+        #     # 返回每一个index对应的图片数据和对应的label
+        #     return img_as_img, number_label
+
+        if 'label' in self.data_info.columns:
+            number_label = class_to_num[self.data_info.iloc[index, 1]]
             return img_as_img, number_label
+        else:
+            return img_as_img
+
     def __len__(self):
-        return self.real_len
+        # return self.real_len
+        return len(self.data_info)
 
+# 将数据划分为训练集和验证集，按 80%:20% 划分
+train_data, valid_data = train_test_split(labels_dataFrame, test_size=0.2, random_state=42)
 
-train_path = '../data/Classify-Leaves/train.csv'
+# 保存划分好的数据
+train_data.to_csv('../data/Classify-Leaves/train_split.csv', index=False)
+valid_data.to_csv('../data/Classify-Leaves/valid_split.csv', index=False)
+
+train_path = '../data/Classify-Leaves/train_split.csv'
+valid_path = '../data/Classify-Leaves/valid_split.csv'
 test_path = '../data/Classify-Leaves/test.csv'
 img_path = '../data/Classify-Leaves/'
-train_dataset = LeaveData(train_path, img_path, mode='train')
-val_dataset = LeaveData(train_path, img_path, mode='valid')
-test_dataset = LeaveData(test_path, img_path, mode='test')
+train_dataset = LeaveData(train_path, img_path)
+val_dataset = LeaveData(valid_path, img_path)
+test_dataset = LeaveData(test_path, img_path)
+
+
+# train_path = '../data/Classify-Leaves/train.csv'
+# test_path = '../data/Classify-Leaves/test.csv'
+# img_path = '../data/Classify-Leaves/'
+# train_dataset = LeaveData(train_path, img_path, mode='train')
+# val_dataset = LeaveData(train_path, img_path, mode='valid')
+# test_dataset = LeaveData(test_path, img_path, mode='test')
 # print(train_dataset)
 # print(val_dataset)
 # print(test_dataset)
@@ -146,7 +171,7 @@ val_loader = data.DataLoader(
 )
 test_loader = data.DataLoader(
     dataset = test_dataset,
-    batch_size = 128,
+    batch_size = 32,
     shuffle = False,
     # num_workers = 4
 )
@@ -242,7 +267,7 @@ net = nn.Sequential(b1, b2, b3, b4, b5,
 
 """定义超参数"""
 # lr, num_epochs, wd = 0.01, 10, 0.01
-lr, num_epochs, wd = 0.01, 20, 1e-3
+lr, num_epochs, wd = 0.001, 25, 1e-3
 
 device = d2l.try_gpu()
 model_path = './pre_res_model.ckpt'
@@ -294,21 +319,19 @@ for epoch in range(num_epochs):
     train_accs = []
     net.train()
     # 训练
-    with tqdm(total=len(train_loader), desc=f'Epoch {epoch + 1}/{num_epochs}', unit='batch') as pbar:
-        for X, y in train_loader:
-            X, y = X.to(device), y.to(device)
-            optimizer.zero_grad()
-            y_hat = net(X)
-            l = loss(y_hat, y)
-            l.backward()
-            optimizer.step()
-            # Compute the accuracy for current batch.
-            acc = (y_hat.argmax(dim=-1) == y).float().mean()
-            print("acc:", acc)
-            # Record the loss and accuracy.
-            train_loss.append(l.item())
-            train_accs.append(acc)
-            pbar.update(1)
+    for X, y in tqdm(train_loader):
+        X, y = X.to(device), y.to(device)
+        optimizer.zero_grad()
+        y_hat = net(X)
+        l = loss(y_hat, y)
+        l.backward()
+        optimizer.step()
+        # Compute the accuracy for current batch.
+        acc = (y_hat.argmax(dim=-1) == y).float().mean()
+        # print("acc:", acc)
+        # Record the loss and accuracy.
+        train_loss.append(l.item())
+        train_accs.append(acc)
     # The average loss and accuracy of the training set is the average of the recorded values.
     train_loss = sum(train_loss) / len(train_loss)
     train_acc = sum(train_accs) / len(train_accs)
