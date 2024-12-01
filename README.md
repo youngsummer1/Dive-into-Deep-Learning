@@ -1,6 +1,6 @@
 # 动手学深度学习
-chapter2 线性神经网络
-chapter3 多层感知机
+* chapter2 线性神经网络
+- chapter3 多层感知机
 chapter4 深度学习计算
 chapter5 卷积神经网络
 chapter6 现代卷积神经网络
