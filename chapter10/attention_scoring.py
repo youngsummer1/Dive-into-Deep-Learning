@@ -55,7 +55,7 @@ class AdditiveAttention(nn.Module):
 
     def forward(self, queries, keys, values, valid_lens):
         """
-        :param valid_lens: 有多少 键-值对 是需要的 （长度等于query的长度）
+        :param valid_lens: 有多少 键-值对 是需要的 （长度等于query的长度？也可能是batch_size 的长度？）
                         （对每个query，要考虑多少 键-值对）
         """
         queries, keys = self.W_q(queries), self.W_k(keys)  # 即 Wq*q 和 Wk*k
@@ -133,23 +133,6 @@ class DotProductAttention(nn.Module):
 # 与加性注意力演示相同，由于键包含的是相同的元素， 而这些元素无法通过任何查询进行区分，因此获得了均匀的注意力权重
 # d2l.show_heatmaps(attention.attention_weights.reshape((1, 1, 2, 10)),
 #                   xlabel='Keys', ylabel='Queries')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
